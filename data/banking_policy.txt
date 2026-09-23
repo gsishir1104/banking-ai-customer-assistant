@@ -1,0 +1,134 @@
+FICTIONAL BANK — CUSTOMER SERVICE POLICY
+
+Document Version: 1.0
+Document Type: Internal Customer Service Policy
+
+
+1. ADDRESS CHANGE POLICY
+
+Customers who want to change their residential address must provide:
+
+- Government-issued photo identification
+- Proof of the new address
+- Completed address-change request form
+
+Accepted proof of address includes a recent utility bill, government document, or bank statement.
+
+Address changes must be reviewed by a bank employee before the change is finalized.
+
+
+2. PHONE NUMBER CHANGE POLICY
+
+Customers can request a phone number change through a bank branch or authorized customer service channel.
+
+The customer must provide:
+
+- Government-issued photo identification
+- Existing account information
+- The new phone number
+
+A bank employee must verify the customer's identity before changing the phone number.
+
+
+3. EMAIL ADDRESS CHANGE POLICY
+
+Customers can request an email address change through an authorized customer service channel.
+
+The customer must provide:
+
+- Existing account information
+- Identity verification
+- The new email address
+
+The change must be reviewed by a bank employee.
+
+
+4. LOST OR STOLEN DEBIT CARD
+
+If a customer loses a debit card or believes it has been stolen, the customer should contact the bank immediately.
+
+The bank employee should:
+
+1. Verify the customer's identity.
+2. Temporarily block the card.
+3. Record the incident.
+4. Explain the card replacement process.
+
+Lost or stolen card cases require human review.
+
+
+5. DUPLICATE CARD CHARGE
+
+If a customer reports that the same debit card transaction appears more than once, the customer service employee should:
+
+1. Verify the customer's identity.
+2. Collect the transaction date and amount.
+3. Record the reported duplicate transaction.
+4. Forward the case for transaction investigation.
+
+The AI assistant must not decide whether the transaction is fraudulent.
+
+
+6. UNAUTHORIZED CARD TRANSACTION
+
+If a customer reports a transaction that they do not recognize or believe was unauthorized, the case must be escalated to a bank employee.
+
+The customer service employee should:
+
+- Verify the customer's identity.
+- Record the transaction information.
+- Temporarily block the card when appropriate.
+- Escalate the case for investigation.
+
+The AI assistant must not investigate or make a fraud determination.
+
+
+7. PASSWORD RESET
+
+Customers who forget their online banking password can request a password reset through the authorized password recovery process.
+
+Identity verification is required before a password reset is completed.
+
+Customer service employees must never request or record the customer's existing password.
+
+
+8. ACCOUNT CLOSURE
+
+Customers requesting account closure must contact an authorized bank employee.
+
+The employee must:
+
+- Verify the customer's identity.
+- Check the account status.
+- Explain any applicable closure requirements.
+- Complete the account closure process according to bank procedures.
+
+
+9. CUSTOMER COMPLAINTS
+
+Customers can submit complaints through authorized customer service channels.
+
+The employee should record:
+
+- Customer information
+- Complaint category
+- Description of the issue
+- Date of the complaint
+
+Complaints requiring investigation must be forwarded to the appropriate bank team.
+
+
+10. HUMAN REVIEW POLICY
+
+The AI assistant provides information from the available bank policy documents.
+
+The AI assistant must recommend human review when:
+
+- The requested information is not found in the policy.
+- The customer reports fraud or an unauthorized transaction.
+- A decision requires access to confidential customer information.
+- A bank employee must approve or investigate an action.
+
+The AI assistant must not invent banking policies.
+
+If information cannot be found in the provided policy document, the assistant should clearly say that the information was not found and recommend human review.
