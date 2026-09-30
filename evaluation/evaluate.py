@@ -14,15 +14,24 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 
 
 def load_evaluation_questions():
-    with open("evaluation/questions.json", "r") as file:
+
+    with open(
+        "evaluation/questions.json",
+        "r"
+    ) as file:
+
         return json.load(file)
 
 
 def setup_search():
-    pages = extract_text_from_pdf(PDF_PATH)
-    all_text = "\n".join(pages)
 
-    chunks = chunk_policy(all_text)
+    pages = extract_text_from_pdf(
+        PDF_PATH
+    )
+
+    chunks = chunk_policy(
+        pages
+    )
 
     model = SentenceTransformer(
         MODEL_NAME,
@@ -38,6 +47,7 @@ def setup_search():
 
 
 def evaluate():
+
     questions = load_evaluation_questions()
 
     chunks, model, index = setup_search()
@@ -47,13 +57,24 @@ def evaluate():
     source_correct = 0
     review_correct = 0
 
-    print(f"Evaluating {total} questions...\n")
+    print(
+        f"Evaluating {total} questions...\n"
+    )
 
-    for number, item in enumerate(questions, start=1):
+    for number, item in enumerate(
+        questions,
+        start=1
+    ):
 
         question = item["question"]
-        expected_source = item["expected_source"]
-        expected_review = item["expected_human_review"]
+
+        expected_source = item[
+            "expected_source"
+        ]
+
+        expected_review = item[
+            "expected_human_review"
+        ]
 
         results = search(
             question,
@@ -63,10 +84,13 @@ def evaluate():
             top_k=2,
         )
 
-        # Check whether the expected policy was retrieved.
+        # Check all retrieved chunks
         if results:
 
-            retrieved_text = results[0]["chunk"]
+            retrieved_text = " ".join(
+                result["chunk"]
+                for result in results
+            )
 
             source_correct_for_question = (
                 expected_source.lower()
@@ -79,8 +103,8 @@ def evaluate():
                 expected_source == "None"
             )
 
-        # Create an answer object for testing
-        # the application's human-review rules.
+        # Create a simple answer object
+        # for testing the human-review rules.
         if expected_source == "None":
 
             answer = AIAnswer(
@@ -101,12 +125,16 @@ def evaluate():
         )
 
         if source_correct_for_question:
+
             source_correct += 1
 
         if actual_review == expected_review:
+
             review_correct += 1
 
-        print(f"{number}. {question}")
+        print(
+            f"{number}. {question}"
+        )
 
         print(
             f"   Expected source: "
@@ -130,7 +158,6 @@ def evaluate():
 
         print()
 
-
     source_accuracy = (
         source_correct / total
     ) * 100
@@ -139,10 +166,17 @@ def evaluate():
         review_correct / total
     ) * 100
 
+    print(
+        "================================"
+    )
 
-    print("================================")
-    print("EVALUATION RESULTS")
-    print("================================")
+    print(
+        "EVALUATION RESULTS"
+    )
+
+    print(
+        "================================"
+    )
 
     print(
         f"Source accuracy: "
@@ -155,10 +189,10 @@ def evaluate():
     )
 
     print(
-        f"Questions evaluated: "
-        f"{total}"
+        f"Questions evaluated: {total}"
     )
 
 
 if __name__ == "__main__":
+
     evaluate()

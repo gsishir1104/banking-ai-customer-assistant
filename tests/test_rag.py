@@ -11,66 +11,118 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 
 
 def setup_search():
-    pages = extract_text_from_pdf(PDF_PATH)
-    all_text = "\n".join(pages)
 
-    chunks = chunk_policy(all_text)
+    pages = extract_text_from_pdf(
+        PDF_PATH
+    )
+
+    chunks = chunk_policy(
+        pages
+    )
 
     model = SentenceTransformer(
         MODEL_NAME,
         local_files_only=True
     )
 
-    index = build_search_index(chunks, model)
+    index = build_search_index(
+        chunks,
+        model
+    )
 
     return chunks, model, index
 
 
 def test_address_question_retrieves_address_policy():
+
     chunks, model, index = setup_search()
 
-    question = "What documents are required to change my address?"
+    question = (
+        "What documents are required "
+        "to change my address?"
+    )
 
     results = search(
         question,
         chunks,
         index,
         model,
-        top_k=2,
+        top_k=2
     )
 
     assert len(results) > 0
 
     retrieved_text = " ".join(
-        result["chunk"] for result in results
+        result["chunk"]
+        for result in results
     ).lower()
 
     assert "address change policy" in retrieved_text
-    assert "government-issued photo id" in retrieved_text
-    assert "proof of the new address" in retrieved_text
+
+    assert (
+        "government-issued photo id"
+        in retrieved_text
+    )
+
+    assert (
+        "proof of the new address"
+        in retrieved_text
+    )
 
 
-def test_unsupported_question_returns_no_results():
+def test_address_question_returns_page_number():
+
     chunks, model, index = setup_search()
 
-    question = "How can I apply for a home loan?"
+    question = (
+        "What documents are required "
+        "to change my address?"
+    )
 
     results = search(
         question,
         chunks,
         index,
         model,
-        top_k=2,
+        top_k=2
+    )
+
+    assert len(results) > 0
+
+    assert "page" in results[0]
+
+    assert results[0]["page"] is not None
+
+    assert results[0]["page"] >= 1
+
+
+def test_unsupported_question_returns_no_results():
+
+    chunks, model, index = setup_search()
+
+    question = (
+        "How can I apply for a home loan?"
+    )
+
+    results = search(
+        question,
+        chunks,
+        index,
+        model,
+        top_k=2
     )
 
     assert len(results) == 0
 
 
 def test_unauthorized_transaction_requires_human_review():
+
     from app.llm import AIAnswer
     from app.main import requires_human_review
 
-    question = "Someone used my card without permission."
+    question = (
+        "Someone used my card without permission."
+    )
 
     answer = AIAnswer(
         answer="This case requires human review.",
@@ -79,13 +131,14 @@ def test_unauthorized_transaction_requires_human_review():
 
     result = requires_human_review(
         question,
-        answer,
+        answer
     )
 
     assert result is True
 
 
 def test_ask_api_returns_expected_fields():
+
     from app.main import app
 
     client = TestClient(app)
@@ -93,7 +146,10 @@ def test_ask_api_returns_expected_fields():
     response = client.post(
         "/ask",
         json={
-            "question": "What documents are required to change my address?"
+            "question": (
+                "What documents are required "
+                "to change my address?"
+            )
         },
     )
 
@@ -103,6 +159,11 @@ def test_ask_api_returns_expected_fields():
 
     assert "answer" in data
     assert "source" in data
+    assert "page" in data
     assert "requires_human_review" in data
 
     assert data["requires_human_review"] is False
+
+    assert data["page"] is not None
+
+    assert data["page"] >= 1

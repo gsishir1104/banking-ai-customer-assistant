@@ -6,11 +6,7 @@ from app.document import extract_text_from_pdf
 PDF_PATH = "data/banking_policy.pdf"
 
 
-def chunk_policy(text):
-    # Put PDF text into one continuous line
-    text = text.replace("\n", " ")
-
-    # These are the actual policy sections.
+def chunk_policy(pages):
     policy_titles = [
         "1. ADDRESS CHANGE POLICY",
         "2. PHONE NUMBER CHANGE POLICY",
@@ -24,37 +20,51 @@ def chunk_policy(text):
         "10. HUMAN REVIEW POLICY",
     ]
 
-    # Create one regex that matches ONLY our real policy headings.
-    pattern = "(" + "|".join(re.escape(title) for title in policy_titles) + ")"
-
-    # Split at the exact policy headings.
-    parts = re.split(pattern, text)
+    pattern = "(" + "|".join(
+        re.escape(title)
+        for title in policy_titles
+    ) + ")"
 
     chunks = []
 
-    current_chunk = ""
+    for page_number, page_text in enumerate(
+        pages,
+        start=1
+    ):
+        page_text = page_text.replace("\n", " ")
 
-    for part in parts:
-        part = part.strip()
+        parts = re.split(
+            pattern,
+            page_text
+        )
 
-        if not part:
-            continue
+        current_chunk = ""
 
-        # If this part is an actual policy heading,
-        # start a new chunk.
-        if part in policy_titles:
+        for part in parts:
+            part = part.strip()
 
-            if current_chunk:
-                chunks.append(current_chunk.strip())
+            if not part:
+                continue
 
-            current_chunk = part
+            if part in policy_titles:
 
-        else:
-            current_chunk += " " + part
+                if current_chunk:
+                    chunks.append({
+                        "text": current_chunk.strip(),
+                        "page": page_number
+                    })
 
-    # Add final chunk
-    if current_chunk:
-        chunks.append(current_chunk.strip())
+                current_chunk = part
+
+            else:
+
+                current_chunk += " " + part
+
+        if current_chunk:
+            chunks.append({
+                "text": current_chunk.strip(),
+                "page": page_number
+            })
 
     return chunks
 
@@ -62,12 +72,14 @@ def chunk_policy(text):
 if __name__ == "__main__":
     pages = extract_text_from_pdf(PDF_PATH)
 
-    all_text = "\n".join(pages)
-
-    chunks = chunk_policy(all_text)
+    chunks = chunk_policy(pages)
 
     print(f"Total chunks: {len(chunks)}")
 
-    for index, chunk in enumerate(chunks, start=1):
+    for index, chunk in enumerate(
+        chunks,
+        start=1
+    ):
         print(f"\n--- CHUNK {index} ---")
-        print(chunk)
+        print(f"Page: {chunk['page']}")
+        print(chunk["text"])

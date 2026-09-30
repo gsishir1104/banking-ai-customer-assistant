@@ -19,18 +19,29 @@ PDF_PATH = "data/banking_policy.pdf"
 MODEL_NAME = "all-MiniLM-L6-v2"
 
 
-pages = extract_text_from_pdf(PDF_PATH)
-all_text = "\n".join(pages)
-chunks = chunk_policy(all_text)
+# Load policy document
+pages = extract_text_from_pdf(
+    PDF_PATH
+)
+
+# Create policy chunks with page numbers
+chunks = chunk_policy(
+    pages
+)
 
 
+# Load embedding model
 model = SentenceTransformer(
     MODEL_NAME,
     local_files_only=True
 )
 
 
-index = build_search_index(chunks, model)
+# Build FAISS search index
+index = build_search_index(
+    chunks,
+    model
+)
 
 
 class QuestionRequest(BaseModel):
@@ -51,9 +62,13 @@ def health():
     }
 
 
-def requires_human_review(question, answer):
+def requires_human_review(
+    question,
+    answer
+):
     """
     Deterministic business rules for human review.
+
     The LLM does not control this decision.
     """
 
@@ -74,6 +89,7 @@ def requires_human_review(question, answer):
     ]
 
     for term in sensitive_terms:
+
         if term in question_lower:
             return True
 
@@ -84,7 +100,9 @@ def requires_human_review(question, answer):
 
 
 @app.post("/ask")
-def ask_question(request: QuestionRequest):
+def ask_question(
+    request: QuestionRequest
+):
 
     results = search(
         request.question,
@@ -94,7 +112,9 @@ def ask_question(request: QuestionRequest):
         top_k=2,
     )
 
-    context = get_context(results)
+    context = get_context(
+        results
+    )
 
     answer = generate_answer(
         request.question,
@@ -106,8 +126,16 @@ def ask_question(request: QuestionRequest):
         answer,
     )
 
+    # Use the first retrieved result
+    # as the source page.
+    page = None
+
+    if results:
+        page = results[0]["page"]
+
     return {
         "answer": answer.answer,
         "source": answer.source,
+        "page": page,
         "requires_human_review": human_review,
     }
