@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
@@ -12,6 +13,17 @@ app = FastAPI(
     title="Banking AI Customer Assistant",
     description="RAG-based banking policy assistant",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+    ],
+    allow_origin_regex=r"https://.*\.app\.github\.dev",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -32,8 +44,7 @@ chunks = chunk_policy(
 
 # Load embedding model
 model = SentenceTransformer(
-    MODEL_NAME,
-    local_files_only=True
+    MODEL_NAME
 )
 
 
