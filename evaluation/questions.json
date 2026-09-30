@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What documents are required to change my address?",
+    "expected_source": "Address Change Policy",
+    "expected_human_review": false
+  },
+  {
+    "question": "How can I change my phone number?",
+    "expected_source": "Phone Number Change Policy",
+    "expected_human_review": false
+  },
+  {
+    "question": "What do I do if my debit card is lost?",
+    "expected_source": "Lost or Stolen Debit Card",
+    "expected_human_review": true
+  },
+  {
+    "question": "Someone used my card without permission.",
+    "expected_source": "Unauthorized Card Transaction",
+    "expected_human_review": true
+  },
+  {
+    "question": "My card was charged twice for the same purchase.",
+    "expected_source": "Duplicate Card Charge",
+    "expected_human_review": true
+  },
+  {
+    "question": "How do I reset my password?",
+    "expected_source": "Password Reset",
+    "expected_human_review": false
+  },
+  {
+    "question": "How can I apply for a home loan?",
+    "expected_source": "None",
+    "expected_human_review": true
+  },
+  {
+    "question": "How do I close my bank account?",
+    "expected_source": "Account Closure",
+    "expected_human_review": false
+  },
+  {
+    "question": "How do I submit a customer complaint?",
+    "expected_source": "Customer Complaints",
+    "expected_human_review": false
+  },
+  {
+    "question": "What should happen when the policy does not contain the information I need?",
+    "expected_source": "Human Review Policy",
+    "expected_human_review":false
+  }
+]

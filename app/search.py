@@ -2,12 +2,15 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from chunker import chunk_policy
-from document import extract_text_from_pdf
+from app.chunker import chunk_policy
+from app.document import extract_text_from_pdf
 
 
 PDF_PATH = "data/banking_policy.pdf"
 MODEL_NAME = "all-MiniLM-L6-v2"
+
+# Smaller distance = more similar
+MAX_DISTANCE = 1.0
 
 
 def build_search_index(chunks, model):
@@ -38,12 +41,30 @@ def search(query, chunks, index, model, top_k=2):
         distances[0],
         indices[0]
     ):
+        distance = float(distance)
+
+        # Ignore weak matches
+        if distance > MAX_DISTANCE:
+            continue
+
         results.append({
             "chunk": chunks[index_number],
-            "distance": float(distance)
+            "distance": distance
         })
 
     return results
+
+
+def get_context(results):
+    if not results:
+        return None
+
+    context_parts = []
+
+    for result in results:
+        context_parts.append(result["chunk"])
+
+    return "\n\n".join(context_parts)
 
 
 if __name__ == "__main__":
@@ -54,7 +75,7 @@ if __name__ == "__main__":
     # 2. Combine pages
     all_text = "\n".join(pages)
 
-    # 3. Create policy chunks
+    # 3. Create chunks
     chunks = chunk_policy(all_text)
 
     print(f"Total chunks: {len(chunks)}")
@@ -62,8 +83,7 @@ if __name__ == "__main__":
     # 4. Load embedding model
     print("\nLoading embedding model...")
 
-    model = SentenceTransformer(MODEL_NAME)
-
+    model = SentenceTransformer(MODEL_NAME, local_files_only=True)
     # 5. Build FAISS index
     print("Building FAISS index...")
 
@@ -72,9 +92,8 @@ if __name__ == "__main__":
         model
     )
 
-    # 6. Ask a question
+    # 6. Test question
     query = "What documents are required to change my address?"
-
     print("\nQUESTION:")
     print(query)
 
@@ -88,16 +107,26 @@ if __name__ == "__main__":
     )
 
     # 8. Display results
-    print("\nSEARCH RESULTS:")
+    print("\nRELEVANT RESULTS:")
 
-    for number, result in enumerate(
-        results,
-        start=1
-    ):
-        print(f"\n--- RESULT {number} ---")
+    if not results:
+        print("No relevant policy information was found.")
 
-        print(
-            f"Distance: {result['distance']:.4f}"
-        )
+    else:
+        for number, result in enumerate(
+            results,
+            start=1
+        ):
+            print(f"\n--- RESULT {number} ---")
+            print(f"Distance: {result['distance']:.4f}")
+            print(result["chunk"])
 
-        print(result["chunk"])
+    # 9. Create context for future LLM
+    context = get_context(results)
+
+    print("\n--- LLM CONTEXT ---")
+
+    if context:
+        print(context)
+    else:
+        print("No context available.")

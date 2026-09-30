@@ -1,6 +1,6 @@
 import re
 
-from document import extract_text_from_pdf
+from app.document import extract_text_from_pdf
 
 
 PDF_PATH = "data/banking_policy.pdf"

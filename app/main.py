@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from sentence_transformers import SentenceTransformer
 
 from app.chunker import chunk_policy
 from app.document import extract_text_from_pdf
 from app.search import build_search_index, search, get_context
 from app.llm import generate_answer
-from sentence_transformers import SentenceTransformer
 
 
 app = FastAPI(
@@ -19,20 +19,17 @@ PDF_PATH = "data/banking_policy.pdf"
 MODEL_NAME = "all-MiniLM-L6-v2"
 
 
-# Load policy document
 pages = extract_text_from_pdf(PDF_PATH)
 all_text = "\n".join(pages)
 chunks = chunk_policy(all_text)
 
 
-# Load embedding model
 model = SentenceTransformer(
     MODEL_NAME,
     local_files_only=True
 )
 
 
-# Build FAISS search index
 index = build_search_index(chunks, model)
 
 
@@ -69,6 +66,9 @@ def requires_human_review(question, answer):
         "without permission",
         "stolen",
         "lost card",
+        "card is lost",
+        "debit card is lost",
+        "lost debit card",
         "duplicate charge",
         "charged twice",
     ]
