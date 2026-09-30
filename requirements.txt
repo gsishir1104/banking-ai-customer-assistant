@@ -2,9 +2,5 @@ fastapi
 uvicorn
 pydantic
 pymupdf
-sentence-transformers
-faiss-cpu
 python-dotenv
-pytest
-reportlab
 openai

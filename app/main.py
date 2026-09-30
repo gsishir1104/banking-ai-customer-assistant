@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
 
 from app.chunker import chunk_policy
 from app.document import extract_text_from_pdf
@@ -20,7 +19,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
     ],
-    allow_origin_regex=r"https://.*\.app\.github\.dev",
+    allow_origin_regex=r"https://.*\.app\.github\.dev|https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,7 +27,6 @@ app.add_middleware(
 
 
 PDF_PATH = "data/banking_policy.pdf"
-MODEL_NAME = "all-MiniLM-L6-v2"
 
 
 # Load policy document
@@ -41,17 +39,9 @@ chunks = chunk_policy(
     pages
 )
 
-
-# Load embedding model
-model = SentenceTransformer(
-    MODEL_NAME
-)
-
-
-# Build FAISS search index
-index = build_search_index(
-    chunks,
-    model
+# Build lightweight search index
+search_index = build_search_index(
+    chunks
 )
 
 
@@ -117,9 +107,7 @@ def ask_question(
 
     results = search(
         request.question,
-        chunks,
-        index,
-        model,
+        search_index,
         top_k=2,
     )
 
@@ -137,8 +125,6 @@ def ask_question(
         answer,
     )
 
-    # Use the first retrieved result
-    # as the source page.
     page = None
 
     if results:

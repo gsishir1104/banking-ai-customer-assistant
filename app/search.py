@@ -1,156 +1,144 @@
-import faiss
-import numpy as np
-from sentence_transformers import SentenceTransformer
+import re
+from collections import Counter
 
 from app.chunker import chunk_policy
 from app.document import extract_text_from_pdf
 
 
 PDF_PATH = "data/banking_policy.pdf"
-MODEL_NAME = "all-MiniLM-L6-v2"
 
-# Smaller distance = more similar
-MAX_DISTANCE = 1.0
-
-
-def build_search_index(chunks, model):
-    texts = [
-        chunk["text"]
-        for chunk in chunks
-    ]
-
-    embeddings = model.encode(texts)
-
-    embeddings = np.array(
-        embeddings
-    ).astype("float32")
-
-    index = faiss.IndexFlatL2(
-        embeddings.shape[1]
-    )
-
-    index.add(embeddings)
-
-    return index
+# Minimum similarity required for a result
+MIN_SCORE = 0.05
 
 
-def search(
-    query,
-    chunks,
-    index,
-    model,
-    top_k=2
-):
-    query_embedding = model.encode(
-        [query]
-    )
+def tokenize(text):
+    """Convert text into simple lowercase words."""
+    return re.findall(r"\b[a-zA-Z0-9]+\b", text.lower())
 
-    query_embedding = np.array(
-        query_embedding
-    ).astype("float32")
 
-    distances, indices = index.search(
-        query_embedding,
-        top_k
-    )
+def build_search_index(chunks):
+    """Build a lightweight TF-IDF-style search index."""
+    document_tokens = []
+    document_frequency = Counter()
 
-    results = []
+    for chunk in chunks:
+        tokens = set(tokenize(chunk["text"]))
+        document_tokens.append(tokens)
 
-    for distance, index_number in zip(
-        distances[0],
-        indices[0]
-    ):
-        distance = float(distance)
+        for token in tokens:
+            document_frequency[token] += 1
 
-        # Ignore weak matches
-        if distance > MAX_DISTANCE:
+    return {
+        "chunks": chunks,
+        "document_tokens": document_tokens,
+        "document_frequency": document_frequency,
+        "total_documents": len(chunks),
+    }
+
+
+def search(query, search_index, top_k=2):
+    """Find the most relevant policy chunks using keyword similarity."""
+
+    query_tokens = set(tokenize(query))
+
+    if not query_tokens:
+        return []
+
+    chunks = search_index["chunks"]
+    document_tokens = search_index["document_tokens"]
+    document_frequency = search_index["document_frequency"]
+    total_documents = search_index["total_documents"]
+
+    scored_results = []
+
+    for position, tokens in enumerate(document_tokens):
+
+        if not tokens:
             continue
 
-        results.append({
-            "chunk": chunks[index_number]["text"],
-            "page": chunks[index_number]["page"],
-            "distance": distance
-        })
+        matched_tokens = query_tokens.intersection(tokens)
 
-    return results
+        if not matched_tokens:
+            continue
+
+        score = 0.0
+
+        for token in matched_tokens:
+            # Simple inverse-document-frequency weighting
+            idf = 1.0 + (
+                total_documents /
+                (1 + document_frequency[token])
+            )
+
+            score += idf
+
+        # Normalize by query size
+        score = score / len(query_tokens)
+
+        if score >= MIN_SCORE:
+            scored_results.append({
+                "chunk": chunks[position]["text"],
+                "page": chunks[position]["page"],
+                "distance": score,
+            })
+
+    scored_results.sort(
+        key=lambda result: result["distance"],
+        reverse=True
+    )
+
+    return scored_results[:top_k]
 
 
 def get_context(results):
+    """Combine retrieved chunks into LLM context."""
+
     if not results:
         return None
 
     context_parts = []
 
     for result in results:
-        context_parts.append(
-            result["chunk"]
-        )
+        context_parts.append(result["chunk"])
 
-    return "\n\n".join(
-        context_parts
-    )
+    return "\n\n".join(context_parts)
 
 
 if __name__ == "__main__":
 
     # 1. Read PDF
-    pages = extract_text_from_pdf(
-        PDF_PATH
-    )
+    pages = extract_text_from_pdf(PDF_PATH)
 
-    # 2. Create chunks with page numbers
+    # 2. Create chunks
     chunks = chunk_policy(pages)
 
-    print(
-        f"Total chunks: {len(chunks)}"
-    )
+    print(f"Total chunks: {len(chunks)}")
 
-    # 3. Load embedding model
-    print(
-        "\nLoading embedding model..."
-    )
+    # 3. Build lightweight search index
+    print("\nBuilding lightweight search index...")
 
-    model = SentenceTransformer(
-        MODEL_NAME,
-        local_files_only=True
-    )
+    search_index = build_search_index(chunks)
 
-    # 4. Build FAISS index
-    print(
-        "Building FAISS index..."
-    )
-
-    index = build_search_index(
-        chunks,
-        model
-    )
-
-    # 5. Test question
-    query = (
-        "What documents are required "
-        "to change my address?"
-    )
+    # 4. Test question
+    query = "What documents are required to change my address?"
 
     print("\nQUESTION:")
     print(query)
 
-    # 6. Search
+    # 5. Search
     results = search(
         query,
-        chunks,
-        index,
-        model,
+        search_index,
         top_k=2
     )
 
-    # 7. Display results
+    # 6. Display results
     print("\nRELEVANT RESULTS:")
 
     if not results:
 
         print(
-            "No relevant policy information "
-            "was found."
+            "No relevant policy information was found."
         )
 
     else:
@@ -160,12 +148,10 @@ if __name__ == "__main__":
             start=1
         ):
 
-            print(
-                f"\n--- RESULT {number} ---"
-            )
+            print(f"\n--- RESULT {number} ---")
 
             print(
-                f"Distance: "
+                f"Score: "
                 f"{result['distance']:.4f}"
             )
 
@@ -177,17 +163,12 @@ if __name__ == "__main__":
                 result["chunk"]
             )
 
-    # 8. Create context for LLM
-    context = get_context(
-        results
-    )
+    # 7. Create context
+    context = get_context(results)
 
     print("\n--- LLM CONTEXT ---")
 
     if context:
         print(context)
-
     else:
-        print(
-            "No context available."
-        )
+        print("No context available.")
